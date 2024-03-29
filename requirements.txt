@@ -1,0 +1,8 @@
+numpy==1.22.2
+parmap
+PyYAML
+seaborn
+scikit_learn
+torch
+tensorboard
+tqdm
