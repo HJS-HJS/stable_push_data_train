@@ -23,10 +23,11 @@ hybrid:
 # Train Configuration
 file_zero_padding_num: 7
 base_lr: 0.0001
+# base_lr: 0.1
 decay_rate: 0.95
 train_l2_regularizer: 0.0005
 batch_size: 64
-num_epochs: 10
+num_epochs: 60
 momentum_rate: 0.9
 # model_name: "2023-08-25-0547"
 network_threshold: 0.01
