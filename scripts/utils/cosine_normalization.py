@@ -32,7 +32,7 @@ class CosineNormalization(nn.Module):
         )
 
 if __name__ == '__main__':
-    model = GQCNN()
+    model = CosineNormalization(128, 2)
 
     print('model structure: \n', model)
     for name, param in model.named_parameters():

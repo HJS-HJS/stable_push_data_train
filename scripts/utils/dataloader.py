@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
+from torch.utils.data import Dataset, DataLoader
 import torch
 import yaml
 import re
@@ -102,9 +102,7 @@ class PushNetDataset(Dataset):
         label_onehot = torch.from_numpy(np.eye(2)[int(label)].astype(np.float32)) # one-hot encoding
         
         return image, velocity, label_onehot
-        
-        
-        
+
 
 def main():
     dataset_dir = DATA_DIR

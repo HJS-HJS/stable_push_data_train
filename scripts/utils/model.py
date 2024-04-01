@@ -4,9 +4,6 @@
 import torch
 import torch.nn as nn
 from .cosine_normalization import CosineNormalization
-import os
-import yaml
-
 
 class PushNet(nn.Module):
     def __init__(self):
@@ -64,3 +61,19 @@ if __name__ == '__main__':
 
     model = PushNet().eval()
     print(list(model.children()))
+
+
+# NewModel
+class NewModel(nn.Module):
+    def __init__(self, original_model, *args):
+        super().__init__()
+        
+        self.im_stream = nn.Sequential(*list(original_model.children())[0])
+        self.pose_stream = nn.Sequential(*list(original_model.children())[1])
+        self.merge_stream = nn.Sequential(*list(original_model.children())[2][:2])
+
+    def forward(self, image, pose):
+        image = self.im_stream(image)
+        pose = self.pose_stream(pose)
+        feature = torch.cat((image, pose), 1)
+        return self.merge_stream(feature)

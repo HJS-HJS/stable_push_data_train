@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from distutils.log import debug
 import os
 from datetime import datetime
-from xml.sax.handler import feature_namespaces
 import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-from utils.model import PushNet
-from feature_map import NewModel
+from utils.model import PushNet, NewModel
 from utils.dataloader import PushNetDataset
 import multiprocessing
 import yaml
