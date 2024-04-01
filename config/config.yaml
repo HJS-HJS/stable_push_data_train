@@ -1,4 +1,4 @@
-data_path: /home/jongsoo/catkin_ws/src/stable_push_data_gen/data
+data_path: /home/jongsoo/catkin_ws/src/stable_push_data_check/data
 # data_path: /home/rise/catkin_ws/src/stable_push_data_gen/data
 
 # Inference Configuration
