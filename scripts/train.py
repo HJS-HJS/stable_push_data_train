@@ -38,12 +38,12 @@ def train_loop(train_loader, model, loss_fn, optimizer):
         # Backward pass
         optimizer.zero_grad()
         _temp_a = list(model.parameters())[0]
-        print(list(model.parameters())[0].grad)
+        # print(list(model.parameters())[0].grad)
         loss.backward()
         optimizer.step()
         _temp_b = list(model.parameters())[0]
-        print(torch.equal(_temp_a.data, _temp_b.data))
-        print(loss.grad)
+        # print(torch.equal(_temp_a.data, _temp_b.data))
+        # print(loss.grad)
 
         # print
         cur_batch += 1
@@ -105,7 +105,7 @@ def val_loop(val_loader, model, loss_fn):
             false_negatives += torch.sum(torch.logical_and(pred == 0, labels == 1)).item()
             true_negatives += torch.sum(torch.logical_and(pred == 0, labels == 0)).item()
             val_acc += torch.sum(pred == labels).item()
-    print(true_positives, false_positives, false_negatives, true_negatives)
+    # print(true_positives, false_positives, false_negatives, true_negatives)
 
     # Print
     val_loss /= num_batches
@@ -183,7 +183,7 @@ if __name__ == "__main__":
     num_workers = multiprocessing.cpu_count()
     cur_date = datetime.today().strftime("%Y-%m-%d-%H%M")
     print('Starting training at {}. Device: {}'.format(cur_date, DEVICE))
-    os.makedirs(os.path.join('..', '..',  'models', cur_date), exist_ok=True)
+    # os.makedirs(os.path.join('..', '..',  'models', cur_date), exist_ok=True)
 
     # Learning rate
     learning_rate = config["base_lr"] # 1e-4
@@ -225,7 +225,6 @@ if __name__ == "__main__":
     writer.add_graph(model, (images.to(DEVICE), poses.to(DEVICE)))
     writer.flush()
     
-    
     epoch_start = 0
     validation_loss = 100
     
@@ -234,7 +233,7 @@ if __name__ == "__main__":
     print(model.parameters())
     for epoch in range(epoch_start,epochs):
         print('Epoch {}/{}'.format(epoch+1, epochs))
-        epoch_start += 1
+        # epoch_start += 1
         train_metric = train_loop(train_dataloader, model, loss_fn, optimizer)
         val_metric = val_loop(val_dataloader, model, loss_fn)
 
