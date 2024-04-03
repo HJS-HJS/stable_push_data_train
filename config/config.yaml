@@ -1,5 +1,6 @@
 data_path: /home/jongsoo/catkin_ws/src/stable_push_data_gen/data
 # data_path: /home/rise/catkin_ws/src/stable_push_data_gen/data
+# data_path: /home/rise/catkin_ws/src/stable_push_data_gen/data_rand
 
 # Inference Configuration
 planner:

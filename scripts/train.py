@@ -248,7 +248,8 @@ if __name__ == "__main__":
         
         writer.flush()
 
-        if validation_loss - val_metric['loss'] < -0.01:
+        # if validation_loss - val_metric['loss'] < -0.01:
+        if validation_loss - val_metric['loss'] < -0.5:
             print('validation loss increase{}'.format(validation_loss - val_metric['loss']))
             pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
             test_sampler = load_sampler(pushnet_test_dataset)
