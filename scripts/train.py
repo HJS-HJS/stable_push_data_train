@@ -195,14 +195,14 @@ if __name__ == "__main__":
     # data
     pushnet_train_dataset = PushNetDataset(dataset_dir, image_type=image_type)
     pushnet_val_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='val')
-    pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
+    # pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
     
     train_sampler = load_sampler(pushnet_train_dataset)
     val_sampler = load_sampler(pushnet_val_dataset)
-    test_sampler = load_sampler(pushnet_test_dataset)
+    # test_sampler = load_sampler(pushnet_test_dataset)
     train_dataloader = DataLoader(pushnet_train_dataset, batch_size, train_sampler, num_workers=num_workers)
     val_dataloader = DataLoader(pushnet_val_dataset, 1000, val_sampler, num_workers=num_workers)
-    test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
+    # test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
 
     # model
     model = PushNet()
@@ -251,10 +251,10 @@ if __name__ == "__main__":
         # if validation_loss - val_metric['loss'] < -0.01:
         if validation_loss - val_metric['loss'] < -0.5:
             print('validation loss increase{}'.format(validation_loss - val_metric['loss']))
-            pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
-            test_sampler = load_sampler(pushnet_test_dataset)
-            test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
-            test_metrcdic = val_loop(test_dataloader, model, loss_fn)
+            # pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
+            # test_sampler = load_sampler(pushnet_test_dataset)
+            # test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
+            # test_metrcdic = val_loop(test_dataloader, model, loss_fn)
             break
         if validation_loss > val_metric['loss']:
             torch.save(model.state_dict(), tmp_model_path + '/{}/'.format(cur_date) + 'model' + str(epoch) + '-' + str(val_metric['loss']) +'.pt')
