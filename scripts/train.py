@@ -102,7 +102,6 @@ def val_loop(val_loader, model, loss_fn):
             false_negatives += torch.sum(torch.logical_and(pred == 0, labels == 1)).item()
             true_negatives += torch.sum(torch.logical_and(pred == 0, labels == 0)).item()
             val_acc += torch.sum(pred == labels).item()
-    # print(true_positives, false_positives, false_negatives, true_negatives)
 
     # Print
     val_loss /= num_batches
@@ -261,3 +260,7 @@ if __name__ == "__main__":
             validation_loss = val_metric['loss']
 
         print('-'*10)
+    torch.save(model.state_dict(), tmp_model_path + '/{}/'.format(cur_date) + 'model-trained-' + str(val_metric['loss']) +'.pt')
+    
+
+# AP (Average Precision)
