@@ -20,6 +20,7 @@ def train_loop(train_loader, model, loss_fn, optimizer):
     average_acc = 0
     average_prec = 0
     average_recall = 0
+    average_ap = 0
     model.train(True)
     pbar = tqdm(train_loader)
     
@@ -34,27 +35,52 @@ def train_loop(train_loader, model, loss_fn, optimizer):
 
         # Backward pass
         optimizer.zero_grad()
-        _temp_a = list(model.parameters())[0]
-        # print(list(model.parameters())[0].grad)
         loss.backward()
         optimizer.step()
-        _temp_b = list(model.parameters())[0]
-        # print(torch.equal(_temp_a.data, _temp_b.data))
-        # print(loss.grad)
 
         # print
         cur_batch += 1
         average_loss = average_loss + (loss.item()-average_loss)/cur_batch
 
-        pred = torch.argmax(pred, dim=1) #(B, 2)
+        # print(pred)
         labels = torch.argmax(labels, dim=1) #(B, 2)
-        acc = torch.sum(pred == labels).item() / (pred.shape[0])
+
+        results = torch.softmax(pred, dim=1)
+        # pred = torch.argmax(pred, dim=1) #(B, 2)
+
+        results = torch.stack([results[:,1], labels], dim=-1)
+        results = results[torch.sort(results[:,0], descending=True)[1]]
+        results = torch.where(results < 0.5, 0, 1)
+    
+        true_positives = torch.sum(torch.logical_and(results[:,0] == 1, results[:,1] == 1)).item()
+        false_positives = torch.sum(torch.logical_and(results[:,0] == 1, results[:,1] == 0)).item()
+        false_negatives = torch.sum(torch.logical_and(results[:,0] == 0, results[:,1] == 1)).item()
+        true_negatives = torch.sum(torch.logical_and(results[:,0] == 0, results[:,1] == 0)).item()
+
+        recall_num = torch.tensor([true_positives + false_negatives]).repeat_interleave(results.shape[0]).to(DEVICE)
+        prec_num = torch.zeros(results.shape[0]).to(DEVICE)
+        prec_num[torch.where(results[:,0] == 1)] = 1
+        prec_num = torch.cumsum(prec_num, dim=0)
+
+        TP = torch.zeros(results.shape[0]).to(DEVICE)
+        TP[torch.logical_and(results[:,0] == 1, results[:,1] == 1)] = 1
+        TP = torch.cumsum(TP, dim=0)
+
+        map = torch.stack([TP/prec_num, TP/recall_num], dim=-1)
+
+        duplicate_mask = torch.cat((map[1:, 1] != map[:-1, 1], torch.tensor([True]).to(DEVICE)), dim=0)
+        last_indices = torch.nonzero(duplicate_mask).squeeze().tolist()
+        map = map[last_indices]
+        try:
+            map[:, 1] -= torch.cat((torch.tensor([0]).to(DEVICE), map[:-1,1]))
+            ap = torch.sum(map[:, 0] * map[:, 1]).item()
+        except:
+            ap = 0
+
+        # pred = torch.argmax(pred, dim=1) #(B, 2)
+        acc = torch.sum(results[:,0] == results[:,1]).item() / (results.shape[0])
         average_acc = average_acc + (acc-average_acc)/cur_batch
-        
-        true_positives = torch.sum(torch.logical_and(pred == 1, labels == 1)).item()
-        false_positives = torch.sum(torch.logical_and(pred == 1, labels == 0)).item()
-        false_negatives = torch.sum(torch.logical_and(pred == 0, labels == 1)).item()
-        true_negatives = torch.sum(torch.logical_and(pred == 0, labels == 0)).item()
+        average_ap = average_ap + (ap-average_ap)/cur_batch
         
         try:
             prec = true_positives / (true_positives + false_positives)
@@ -69,18 +95,19 @@ def train_loop(train_loader, model, loss_fn, optimizer):
         average_recall = average_recall + (recall-average_recall)/cur_batch
 
         if cur_batch % 10 == 0:
-            pbar.set_description('Train Error: | Loss: {:.4f} | Acc: {:.4f} | Prec: {:.4f} | Recall: {:.4f}'.format(average_loss, average_acc, average_prec, average_recall))
-    return {'loss': average_loss, 'accuracy': average_acc, 'precision': average_prec, 'recall': average_recall}
+            pbar.set_description('Train Error: | Loss: {:.4f} | Acc: {:.4f} | Prec: {:.4f} | Recall: {:.4f} | AP: {:.4f}'.format(average_loss, average_acc, average_prec, average_recall, average_ap))
+    return {'loss': average_loss, 'accuracy': average_acc, 'precision': average_prec, 'recall': average_recall, 'ap' : average_ap}
 
 
 def val_loop(val_loader, model, loss_fn):
     size = len(val_loader.dataset)
     num_batches = len(val_loader)
 
-    val_loss, val_acc = 0, 0
+    val_loss, val_acc, val_ap = 0, 0 ,0
     true_positives, false_positives, false_negatives, true_negatives = 0, 0, 0, 0
     model.train(False)
     pbar = tqdm(val_loader)    
+    pbar.set_description('Valid Error: | Loss: {:.4f} | Acc: {:.4f} | Prec: {:.4f} | Recall: {:.4f} | AP: {:.4f}'.format(val_loss, val_acc, 0, 0, val_ap))
     with torch.no_grad():
         for images, velocities, labels in pbar:
             images = images.to(DEVICE)
@@ -95,27 +122,54 @@ def val_loop(val_loader, model, loss_fn):
             val_loss += loss.item()
 
             # Accumulate accuracy
-            pred   = torch.argmax(pred, dim=1)
             labels = torch.argmax(labels, dim=1)
-            true_positives  += torch.sum(torch.logical_and(pred == 1, labels == 1)).item()
-            false_positives += torch.sum(torch.logical_and(pred == 1, labels == 0)).item()
-            false_negatives += torch.sum(torch.logical_and(pred == 0, labels == 1)).item()
-            true_negatives += torch.sum(torch.logical_and(pred == 0, labels == 0)).item()
-            val_acc += torch.sum(pred == labels).item()
+            results = torch.softmax(pred, dim=1)
+            results = torch.stack([results[:,1], labels], dim=-1)
+            results = results[torch.sort(results[:,0], descending=True)[1]]
+            results = torch.where(results < 0.5, 0, 1)
+            true_positives = torch.sum(torch.logical_and(results[:,0] == 1, results[:,1] == 1)).item()
+            false_positives = torch.sum(torch.logical_and(results[:,0] == 1, results[:,1] == 0)).item()
+            false_negatives = torch.sum(torch.logical_and(results[:,0] == 0, results[:,1] == 1)).item()
+            true_negatives = torch.sum(torch.logical_and(results[:,0] == 0, results[:,1] == 0)).item()
 
-    # Print
+            recall_num = torch.tensor([true_positives + false_negatives]).repeat_interleave(results.shape[0]).to(DEVICE)
+            prec_num = torch.zeros(results.shape[0]).to(DEVICE)
+            prec_num[torch.where(results[:,0] == 1)] = 1
+            prec_num = torch.cumsum(prec_num, dim=0)
+        
+            TP = torch.zeros(results.shape[0]).to(DEVICE)
+            TP[torch.logical_and(results[:,0] == 1, results[:,1] == 1)] = 1
+            TP = torch.cumsum(TP, dim=0)
+        
+            map = torch.stack([TP/prec_num, TP/recall_num], dim=-1)
+            duplicate_mask = torch.cat((map[1:, 1] != map[:-1, 1], torch.tensor([True]).to(DEVICE)), dim=0)
+            last_indices = torch.nonzero(duplicate_mask).squeeze().tolist()
+            map = map[last_indices]
+            try:
+                map[:, 1] -= torch.cat((torch.tensor([0]).to(DEVICE), map[:-1,1]))
+                ap = torch.sum(map[:, 0] * map[:, 1]).item()
+            except:
+                ap = 0
+
+            val_ap += ap
+
+            val_acc += torch.sum(results[:,0] == results[:,1]).item()
+            
+            try:
+                val_precision = true_positives / (true_positives + false_positives)
+            except ZeroDivisionError:
+                val_precision = 0
+            try:
+                val_recall = true_positives / (true_positives + false_negatives)
+            except ZeroDivisionError:
+                val_recall = 0
+            pbar.set_description('Valid Error: | Loss: {:.4f} | Acc: {:.4f} | Prec: {:.4f} | Recall: {:.4f} | AP: {:.4f}'.format(val_loss/num_batches, val_acc/size, val_precision, val_recall, val_ap/num_batches))
+
     val_loss /= num_batches
     val_acc /= size
-    try:
-        val_precision = true_positives / (true_positives + false_positives)
-    except ZeroDivisionError:
-        val_precision = 0
-    try:
-        val_recall = true_positives / (true_positives + false_negatives)
-    except ZeroDivisionError:
-        val_recall = 0
-    print('Valid Error: | Loss: {:.4f} | Acc: {:.4f} | Prec: {:.4f} | Recall: {:.4f}'.format(val_loss, val_acc, val_precision, val_recall))
-    return {'loss': val_loss, 'accuracy': val_acc, 'precision': val_precision, 'recall': val_recall}
+    val_ap /= num_batches
+
+    return {'loss': val_loss, 'accuracy': val_acc, 'precision': val_precision, 'recall': val_recall, 'ap' : val_ap}
 
 def feature_extraction(dataloader,model, num_samples):
     print("Extracting features...")
@@ -238,12 +292,13 @@ if __name__ == "__main__":
         acc_metric = {'train': train_metric['accuracy'], 'val': val_metric['accuracy']}
         precision_metric = {'train': train_metric['precision'], 'val': val_metric['precision']}
         recall_metric = {'train': train_metric['recall'], 'val': val_metric['recall']}
+        ap_metric = {'train': train_metric['ap'], 'val': val_metric['ap']}
 
         writer.add_scalars('loss', loss_metric, epoch)
         writer.add_scalars('accuracy', acc_metric, epoch)
-        writer.add_scalars
-        ('precision', precision_metric, epoch)
+        writer.add_scalars('precision', precision_metric, epoch)
         writer.add_scalars('recall', recall_metric, epoch)
+        writer.add_scalars('ap', ap_metric, epoch)
         
         writer.flush()
 
