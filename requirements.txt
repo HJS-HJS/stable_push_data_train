@@ -3,6 +3,7 @@ parmap
 PyYAML
 seaborn
 scikit_learn
-torch
+# torch
+torch==2.0.0+cu118
 tensorboard
 tqdm
