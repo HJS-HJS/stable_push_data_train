@@ -74,6 +74,7 @@ def train_loop(train_loader, model, loss_fn, optimizer):
         try:
             map[:, 1] -= torch.cat((torch.tensor([0]).to(DEVICE), map[:-1,1]))
             ap = torch.sum(map[:, 0] * map[:, 1]).item()
+            if ap is None: ap=0
         except:
             ap = 0
 
