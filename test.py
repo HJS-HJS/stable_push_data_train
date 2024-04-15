@@ -2,3 +2,6 @@ import torch
 print(torch.cuda.is_available())
 print(torch.cuda.current_device())
 print(torch.__version__)
+print(torch.version.cuda)
+print(torch.cuda.get_arch_list())
+print(torch.backends.cudnn.version())
