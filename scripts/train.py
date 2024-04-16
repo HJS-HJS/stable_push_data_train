@@ -81,6 +81,7 @@ def train_loop(train_loader, model, loss_fn, optimizer):
         # pred = torch.argmax(pred, dim=1) #(B, 2)
         acc = torch.sum(results[:,0] == results[:,1]).item() / (results.shape[0])
         average_acc = average_acc + (acc-average_acc)/cur_batch
+        print(acc, average_acc, cur_batch)
         average_ap = average_ap + (ap-average_ap)/cur_batch
         
         try:
