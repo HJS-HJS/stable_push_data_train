@@ -66,21 +66,18 @@ def train_loop(train_loader, model, loss_fn, optimizer):
         TP = torch.cumsum(TP, dim=0)
 
         map = torch.stack([TP/prec_num, TP/recall_num], dim=-1)
+        map[torch.isnan(map)] = 0
 
-        duplicate_mask = torch.cat((map[1:, 1] != map[:-1, 1], torch.tensor([True]).to(DEVICE)), dim=0)
-        last_indices = torch.nonzero(duplicate_mask).squeeze().tolist()
-        map = map[last_indices]
-        try:
-            map[:, 1] -= torch.cat((torch.tensor([0]).to(DEVICE), map[:-1,1]))
-            ap = torch.sum(map[:, 0] * map[:, 1]).item()
-            if average_acc is None: average_acc=0
-        except:
-            ap = 0
+        duplicate_mask = torch.cat((map[1:, 1] != map[:-1, 1], torch.tensor([True]).to(DEVICE)), dim=-1)
+        last_indices = torch.nonzero(duplicate_mask[:]).squeeze().tolist()
+        map = map[last_indices,]
+        map=torch.vstack((torch.tensor([0, 0]).to(DEVICE), map))
+        map[:, 1] -= torch.cat((torch.tensor([0]).to(DEVICE), map[:-1,1]))
+        ap = torch.sum(map[:, 0] * map[:, 1]).item()
 
         # pred = torch.argmax(pred, dim=1) #(B, 2)
         acc = torch.sum(results[:,0] == results[:,1]).item() / (results.shape[0])
         average_acc = average_acc + (acc-average_acc)/cur_batch
-        print(ap, average_ap, cur_batch)
         average_ap = average_ap + (ap-average_ap)/cur_batch
         
         try:
@@ -143,14 +140,14 @@ def val_loop(val_loader, model, loss_fn):
             TP = torch.cumsum(TP, dim=0)
         
             map = torch.stack([TP/prec_num, TP/recall_num], dim=-1)
+            map[torch.isnan(map)] = 0
+
             duplicate_mask = torch.cat((map[1:, 1] != map[:-1, 1], torch.tensor([True]).to(DEVICE)), dim=0)
             last_indices = torch.nonzero(duplicate_mask).squeeze().tolist()
             map = map[last_indices]
-            try:
-                map[:, 1] -= torch.cat((torch.tensor([0]).to(DEVICE), map[:-1,1]))
-                ap = torch.sum(map[:, 0] * map[:, 1]).item()
-            except:
-                ap = 0
+            map=torch.vstack((torch.tensor([0, 0]).to(DEVICE), map))
+            map[:, 1] -= torch.cat((torch.tensor([0]).to(DEVICE), map[:-1,1]))
+            ap = torch.sum(map[:, 0] * map[:, 1]).item()
 
             val_ap += ap
 
