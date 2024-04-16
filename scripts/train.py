@@ -275,6 +275,7 @@ if __name__ == "__main__":
     
     epoch_start = 0
     validation_loss = 100
+    max_val_ap = 0
     
     # train
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -308,7 +309,7 @@ if __name__ == "__main__":
             # test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
             # test_metrcdic = val_loop(test_dataloader, model, loss_fn)
             break
-        if validation_loss > val_metric['loss']:
+        if (validation_loss > val_metric['loss']) or (max_val_ap < val_metric['ap']):
             torch.save(model.state_dict(), tmp_model_path + '/{}/'.format(cur_date) + 'model' + str(epoch) + '-' + str(val_metric['loss']) +'.pt')
             validation_loss = val_metric['loss']
 
