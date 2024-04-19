@@ -43,10 +43,7 @@ def plot_model(dataloader,model,velocities,num_samples):
     image_fig = plt.figure()
     num_samples_per_edge = int(np.ceil(np.sqrt(num_samples)))
     stability, images = model_loop(dataloader,model,velocities)
-    print(stability.shape)
     stability = stability.reshape(num_samples,-1)
-    # stability = stability.reshape(-1,1000)
-    print(stability.shape)
     for idx in range(num_samples):
         
         # Plot model output
@@ -97,11 +94,11 @@ if __name__ == '__main__':
 
     # Load configuation file
     with open(config_file,'r') as f:
-        cfg = yaml.load(f, Loader=yaml.FullLoader)
+        config = yaml.load(f, Loader=yaml.FullLoader)
 
-    model_path = os.path.abspath(os.path.join(current_file_path, '..',  'models', cfg['network']['model_name'], 'model.pt'))
-    DATA_DIR = cfg["data_path"]
-    num_push_cases = cfg['network_output']['num_pushes']
+    model_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), config["model_dir"], config['network']["model_name"], 'model.pt'))
+    DATA_DIR = config["data_dir"]
+    num_push_cases = config['network_output']['num_pushes']
     data_stats_dir = os.path.expanduser('~') + '/' + DATA_DIR + '/data_stats'
     
     MAX_H=0.02
@@ -117,11 +114,11 @@ if __name__ == '__main__':
     
     model = PushNet()
     model.to(DEVICE)
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_dir))
     
     # Getting features and confusion index
     print("Getting features and confusion index")
-    test_dataset = PushNetDataset(dataset_dir=DATA_DIR, type='test', image_type=cfg['planner']['image_type'], num_debug_samples = num_push_cases)
+    test_dataset = PushNetDataset(dataset_dir=DATA_DIR, type='test', image_type=config['planner']['image_type'], num_debug_samples = num_push_cases)
     test_sampler = load_sampler(test_dataset)
     num_workers = multiprocessing.cpu_count()
     dataloader = DataLoader(test_dataset, shuffle=True, num_workers=num_workers)

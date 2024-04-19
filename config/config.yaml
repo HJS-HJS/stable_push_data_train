@@ -1,4 +1,5 @@
-data_path: catkin_ws/src/stable_push_data_gen/data
+data_dir: catkin_ws/src/data
+model_dir: catkin_ws/src/models
 
 # Inference Configuration
 planner:

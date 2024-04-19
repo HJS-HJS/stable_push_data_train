@@ -111,10 +111,11 @@ if __name__ == "__main__":
     with open(config_file,'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     MODEL_NAME = config['network']["model_name"]
-    model_path = os.path.abspath(os.path.join(current_file_path, '..',  'models', MODEL_NAME, 'model.pt'))
+
+    model_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), config["model_dir"], MODEL_NAME, 'model.pt'))
 
     # data
-    pushnet_test_dataset = PushNetDataset(dataset_dir=config["data_path"], image_type=config['planner']['image_type'], type='test', zero_padding=config['file_zero_padding_num'])
+    pushnet_test_dataset = PushNetDataset(dataset_dir=config["data_dir"], image_type=config['planner']['image_type'], type='test', zero_padding=config['file_zero_padding_num'])
     
     test_sampler = load_sampler(pushnet_test_dataset)
     test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=multiprocessing.cpu_count())
@@ -122,6 +123,6 @@ if __name__ == "__main__":
     # model
     model = PushNet()
     model.to(DEVICE)
-    model.load_state_dict(torch.load(model_path)) #
+    model.load_state_dict(torch.load(model_dir)) #
     
     test_metric = test_loop(test_dataloader, model, nn.CrossEntropyLoss())

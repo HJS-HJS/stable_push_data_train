@@ -221,7 +221,7 @@ if __name__ == "__main__":
     image_type = config['planner']['image_type']
 
     # Data Directories
-    dataset_dir = config["data_path"]
+    dataset_dir = config["data_dir"]
     tensor_dir = dataset_dir + '/tensors'
 
     num_workers = multiprocessing.cpu_count()
@@ -253,8 +253,10 @@ if __name__ == "__main__":
     loss_fn = nn.CrossEntropyLoss()
 
     # configure tensorboard
-    tmp_model_path = os.path.abspath(os.path.join(current_file_path, '..',  'models'))
-    writer = SummaryWriter(tmp_model_path + '/{}/logs'.format(cur_date))
+    dataset_dir = os.path.expanduser('~') + '/' + config["model_dir"]
+
+    model_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), config["model_dir"]))
+    writer = SummaryWriter(model_dir + '/{}/logs'.format(cur_date))
     dataiter = iter(train_dataloader)
     images, poses, labels = next(dataiter)
     
@@ -296,9 +298,9 @@ if __name__ == "__main__":
             print('validation loss increase{}'.format(validation_loss - val_metric['loss']))
             break
         if (validation_loss > val_metric['loss']) or (max_val_ap < val_metric['ap']):
-            torch.save(model.state_dict(), tmp_model_path + '/{}/'.format(cur_date) + 'model' + str(epoch) + '-' + str(val_metric['loss']) +'.pt')
+            torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model' + str(epoch) + '_' + str(val_metric['loss']) +'.pt')
             validation_loss = val_metric['loss']
 
         print('-'*10)
-    torch.save(model.state_dict(), tmp_model_path + '/{}/'.format(cur_date) + 'model-trained-' + str(val_metric['loss']) +'.pt')
+    torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model_trained_' + str(val_metric['loss']) +'.pt')
     
