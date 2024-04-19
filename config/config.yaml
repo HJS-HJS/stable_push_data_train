@@ -1,6 +1,4 @@
-data_path: /home/jongsoo/catkin_ws/src/stable_push_data_gen/data
-# data_path: /home/rise/catkin_ws/src/stable_push_data_gen/data
-# data_path: /home/rise/catkin_ws/src/stable_push_data_gen/data_rand
+data_path: catkin_ws/src/stable_push_data_gen/data
 
 # Inference Configuration
 planner:
@@ -15,7 +13,8 @@ depth_based:
   friction_coefficient: 1
 
 network:
-  model_name: "2023-10-15-2157_zivid"
+  # model_name: "2023-10-15-2157_zivid"
+  model_name: "2024-04-19-1552"
   network_threshold: 0.2
 
 hybrid:
@@ -48,4 +47,4 @@ feature:
   num_data_points: 5000 # How many data points you want to analyze
 
 network_output:
-  num_pushes: 1 # How many push cases you want to analyze
+  num_pushes: 9 # How many push cases you want to analyze

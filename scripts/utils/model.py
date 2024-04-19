@@ -62,7 +62,6 @@ if __name__ == '__main__':
     model = PushNet().eval()
     print(list(model.children()))
 
-
 # NewModel
 class NewModel(nn.Module):
     def __init__(self, original_model, *args):

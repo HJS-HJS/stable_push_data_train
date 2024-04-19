@@ -13,7 +13,6 @@ from utils.dataloader import PushNetDataset
 import multiprocessing
 import yaml
 
-
 def train_loop(train_loader, model, loss_fn, optimizer):
     cur_batch = 0
     average_loss = 0
@@ -42,7 +41,6 @@ def train_loop(train_loader, model, loss_fn, optimizer):
         cur_batch += 1
         average_loss = average_loss + (loss.item()-average_loss)/cur_batch
 
-        # print(pred)
         labels = torch.argmax(labels, dim=1) #(B, 2)
 
         results = torch.softmax(pred, dim=1)
@@ -75,7 +73,6 @@ def train_loop(train_loader, model, loss_fn, optimizer):
         map[:, 1] -= torch.cat((torch.tensor([0]).to(DEVICE), map[:-1,1]))
         ap = torch.sum(map[:, 0] * map[:, 1]).item()
 
-        # pred = torch.argmax(pred, dim=1) #(B, 2)
         acc = torch.sum(results[:,0] == results[:,1]).item() / (results.shape[0])
         average_acc = average_acc + (acc-average_acc)/cur_batch
         average_ap = average_ap + (ap-average_ap)/cur_batch
@@ -92,7 +89,7 @@ def train_loop(train_loader, model, loss_fn, optimizer):
         average_prec = average_prec + (prec-average_prec)/cur_batch
         average_recall = average_recall + (recall-average_recall)/cur_batch
 
-        if cur_batch % 10 == 0:
+        if cur_batch % 10 == 1:
             pbar.set_description('Train Error: | Loss: {:.4f} | Acc: {:.4f} | Prec: {:.4f} | Recall: {:.4f} | AP: {:.4f}'.format(average_loss, average_acc, average_prec, average_recall, average_ap))
     return {'loss': average_loss, 'accuracy': average_acc, 'precision': average_prec, 'recall': average_recall, 'ap' : average_ap}
 
@@ -226,12 +223,10 @@ if __name__ == "__main__":
     # Data Directories
     dataset_dir = config["data_path"]
     tensor_dir = dataset_dir + '/tensors'
-    
 
     num_workers = multiprocessing.cpu_count()
     cur_date = datetime.today().strftime("%Y-%m-%d-%H%M")
     print('Starting training at {}. Device: {}'.format(cur_date, DEVICE))
-    # os.makedirs(os.path.join('..', '..',  'models', cur_date), exist_ok=True)
 
     # Learning rate
     learning_rate = config["base_lr"] # 1e-4
@@ -244,16 +239,13 @@ if __name__ == "__main__":
     momentum_rate = config["momentum_rate"] # 0.9
 
     # data
-    pushnet_train_dataset = PushNetDataset(dataset_dir, image_type=image_type)
-    pushnet_val_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='val')
-    # pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
+    pushnet_train_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='train', zero_padding=config["file_zero_padding_num"])
+    pushnet_val_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='val', zero_padding=config["file_zero_padding_num"])
     
     train_sampler = load_sampler(pushnet_train_dataset)
     val_sampler = load_sampler(pushnet_val_dataset)
-    # test_sampler = load_sampler(pushnet_test_dataset)
     train_dataloader = DataLoader(pushnet_train_dataset, batch_size, train_sampler, num_workers=num_workers)
     val_dataloader = DataLoader(pushnet_val_dataset, 1000, val_sampler, num_workers=num_workers)
-    # test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
 
     # model
     model = PushNet()
@@ -282,7 +274,6 @@ if __name__ == "__main__":
     print(model.parameters())
     for epoch in range(epoch_start,epochs):
         print('Epoch {}/{}'.format(epoch+1, epochs))
-        # epoch_start += 1
         train_metric = train_loop(train_dataloader, model, loss_fn, optimizer)
         val_metric = val_loop(val_dataloader, model, loss_fn)
 
@@ -301,13 +292,8 @@ if __name__ == "__main__":
         
         writer.flush()
 
-        # if validation_loss - val_metric['loss'] < -0.01:
         if validation_loss - val_metric['loss'] < -0.5:
             print('validation loss increase{}'.format(validation_loss - val_metric['loss']))
-            # pushnet_test_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='test')
-            # test_sampler = load_sampler(pushnet_test_dataset)
-            # test_dataloader = DataLoader(pushnet_test_dataset, 1000, test_sampler, num_workers=num_workers)
-            # test_metrcdic = val_loop(test_dataloader, model, loss_fn)
             break
         if (validation_loss > val_metric['loss']) or (max_val_ap < val_metric['ap']):
             torch.save(model.state_dict(), tmp_model_path + '/{}/'.format(cur_date) + 'model' + str(epoch) + '-' + str(val_metric['loss']) +'.pt')
@@ -316,5 +302,3 @@ if __name__ == "__main__":
         print('-'*10)
     torch.save(model.state_dict(), tmp_model_path + '/{}/'.format(cur_date) + 'model-trained-' + str(val_metric['loss']) +'.pt')
     
-
-# AP (Average Precision)
