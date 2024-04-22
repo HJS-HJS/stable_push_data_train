@@ -152,7 +152,7 @@ def val_loop(val_loader, model, loss_fn):
             tp_sum += true_positives
             fp_sum += false_positives
             fn_sum += false_negatives
-            
+
             try:
                 val_precision = tp_sum / (tp_sum + fp_sum)
             except ZeroDivisionError:
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     writer.flush()
     
     epoch_start = 0
-    validation_loss = 100
+    min_val_loss = 100
     max_val_ap = 0
     
     # train
@@ -297,12 +297,15 @@ if __name__ == "__main__":
         
         writer.flush()
 
-        if validation_loss - val_metric['loss'] < -0.5:
-            print('validation loss increase{}'.format(validation_loss - val_metric['loss']))
+        if min_val_loss - val_metric['loss'] < -0.5:
+            print('validation loss increase{}'.format(min_val_loss - val_metric['loss']))
             break
-        if (validation_loss > val_metric['loss']) or (max_val_ap < val_metric['ap']):
-            torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model' + str(epoch) + '_' + str(val_metric['loss']) +'.pt')
-            validation_loss = val_metric['loss']
+        if min_val_loss > val_metric['loss']:
+            torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model' + str(epoch) + '_loss_' + str(val_metric['loss']) +'.pt')
+            min_val_loss = val_metric['loss']
+        if max_val_ap < val_metric['ap']:
+            torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model' + str(epoch) + '_ap_' + str(val_metric['ap']) +'.pt')
+            max_val_ap = val_metric['ap']
 
         print('-'*10)
     torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model_trained_' + str(val_metric['loss']) +'.pt')
