@@ -52,7 +52,6 @@ def train_loop(train_loader, model, loss_fn, optimizer):
         true_positives = torch.sum(torch.logical_and(results[:,0] == 1, results[:,1] == 1)).item()
         false_positives = torch.sum(torch.logical_and(results[:,0] == 1, results[:,1] == 0)).item()
         false_negatives = torch.sum(torch.logical_and(results[:,0] == 0, results[:,1] == 1)).item()
-        true_negatives = torch.sum(torch.logical_and(results[:,0] == 0, results[:,1] == 0)).item()
 
         recall_num = torch.tensor([true_positives + false_negatives]).repeat_interleave(results.shape[0]).to(DEVICE)
         prec_num = torch.zeros(results.shape[0]).to(DEVICE)
@@ -99,6 +98,7 @@ def val_loop(val_loader, model, loss_fn):
     num_batches = len(val_loader)
 
     val_loss, val_acc, val_ap = 0, 0 ,0
+    tp_sum, fp_sum, fn_sum = 0, 0, 0
     true_positives, false_positives, false_negatives, true_negatives = 0, 0, 0, 0
     model.train(False)
     pbar = tqdm(val_loader)    
@@ -125,7 +125,6 @@ def val_loop(val_loader, model, loss_fn):
             true_positives = torch.sum(torch.logical_and(results[:,0] == 1, results[:,1] == 1)).item()
             false_positives = torch.sum(torch.logical_and(results[:,0] == 1, results[:,1] == 0)).item()
             false_negatives = torch.sum(torch.logical_and(results[:,0] == 0, results[:,1] == 1)).item()
-            true_negatives = torch.sum(torch.logical_and(results[:,0] == 0, results[:,1] == 0)).item()
 
             recall_num = torch.tensor([true_positives + false_negatives]).repeat_interleave(results.shape[0]).to(DEVICE)
             prec_num = torch.zeros(results.shape[0]).to(DEVICE)
@@ -150,12 +149,16 @@ def val_loop(val_loader, model, loss_fn):
 
             val_acc += torch.sum(results[:,0] == results[:,1]).item()
             
+            tp_sum += true_positives
+            fp_sum += false_positives
+            fn_sum += false_negatives
+            
             try:
-                val_precision = true_positives / (true_positives + false_positives)
+                val_precision = tp_sum / (tp_sum + fp_sum)
             except ZeroDivisionError:
                 val_precision = 0
             try:
-                val_recall = true_positives / (true_positives + false_negatives)
+                val_recall = tp_sum / (tp_sum + fn_sum)
             except ZeroDivisionError:
                 val_recall = 0
             pbar.set_description('Valid Error: | Loss: {:.4f} | Acc: {:.4f} | Prec: {:.4f} | Recall: {:.4f} | AP: {:.4f}'.format(val_loss/num_batches, val_acc/size, val_precision, val_recall, val_ap/num_batches))
