@@ -9,13 +9,10 @@ from utils.model import PushNet
 from utils.dataloader import PushNetDataset
 from utils.utils import fibonacci_sphere, linear_velocities
 torch.multiprocessing.set_sharing_strategy('file_system')
-import matplotlib
-# matplotlib.use('TkAgg')
-matplotlib.use('Qt5Agg')
+# import matplotlib
+# matplotlib.use('Qt5Agg')
 
 import matplotlib.pyplot as plt
-# from matplotlib import pyplot as plt
-
 
 '''
 Plot the network output (velocity sphere in which each velocity is colored by the estimated push success rate)
