@@ -9,7 +9,9 @@ from utils.model import PushNet
 from utils.dataloader import PushNetDataset
 from utils.utils import fibonacci_sphere, linear_velocities
 torch.multiprocessing.set_sharing_strategy('file_system')
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib import pyplot as plt
 
 
 '''
