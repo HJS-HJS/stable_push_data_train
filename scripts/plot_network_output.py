@@ -11,7 +11,8 @@ from utils.utils import fibonacci_sphere, linear_velocities
 torch.multiprocessing.set_sharing_strategy('file_system')
 import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+# from matplotlib import pyplot as plt
 
 
 '''
