@@ -15,7 +15,7 @@ depth_based:
 
 network:
   # model_name: "2023-10-15-2157_zivid"
-  model_name: "2024-04-19-1552"
+  model_name: "2024-04-23-1601"
   network_threshold: 0.2
 
 hybrid:
@@ -29,7 +29,7 @@ base_lr: 0.0001
 decay_rate: 0.95
 train_l2_regularizer: 0.0005
 # batch_size: 64
-batch_size: 80
+batch_size: 32
 num_epochs: 60
 momentum_rate: 0.9
 # model_name: "2023-08-25-0547"
@@ -48,4 +48,5 @@ feature:
   num_data_points: 5000 # How many data points you want to analyze
 
 network_output:
-  num_pushes: 9 # How many push cases you want to analyze
+  # num_pushes: 9 # How many push cases you want to analyze
+  num_pushes: 36 # How many push cases you want to analyze
