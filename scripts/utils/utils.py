@@ -47,10 +47,13 @@ def linear_velocities(samples: int=2000) -> List[Union[float, float, float]]:
     Returns:
         List[Union[float, float, float]]: _description_
     """
-
     # log_radius = np.linspace(np.log10(1e-4), np.log10(100), samples)
     # log_radius = np.linspace(np.log10(1e-2), np.log10(10), samples)
-    log_radius = np.linspace(np.log10(1e-1), np.log10(10), samples)
+    # log_radius = np.linspace(np.log10(1e-1), np.log10(10), samples)
+    # log_radius = np.linspace(-1.5, np.log10(10), samples)
+    # log_radius = np.linspace(-1.2, 0.5, samples)
+    log_radius = np.linspace(-1.5, 0.5, samples)
+    # log_radius = np.linspace(np.log10(10), np.log10(100), samples)
     radius_positive = np.power(10, log_radius)
     radius = np.concatenate((np.flip(-radius_positive), radius_positive))
     icrs = np.vstack((radius, np.zeros_like(radius), np.ones_like(radius))).T

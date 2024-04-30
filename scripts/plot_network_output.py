@@ -105,10 +105,12 @@ if __name__ == '__main__':
     
     MAX_H=0.02
     MIN_H=0.02
+    MAX_L=0.08
+    MIN_L=0.04
     MAX_A=np.pi/2
     MIN_A=0
     VEL_NUM=2000
-    _velocity=np.vstack((linear_velocities(samples=int(VEL_NUM/2))[:,0], MIN_H + (MAX_H - MIN_H) * np.random.rand(VEL_NUM), MIN_A + (MAX_A - MIN_A) * np.random.rand(VEL_NUM))).T
+    _velocity=np.vstack((linear_velocities(samples=int(VEL_NUM/2))[:,0], MIN_L + (MAX_L - MIN_L) * np.random.rand(VEL_NUM), MIN_A + (MAX_A - MIN_A) * np.random.rand(VEL_NUM))).T
 
     velocity_mean = np.load(data_stats_dir + "/velocity_mean.npy")
     velocity_std = np.load(data_stats_dir + "/velocity_std.npy")
