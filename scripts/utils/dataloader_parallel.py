@@ -82,6 +82,19 @@ class DataLoaderParallel(Dataset):
         label_tensor = np.load(os.path.join(tensor_dir, label_tensor_name), allow_pickle=True)
         return {idx:label_tensor.astype(np.float32)}
     
+    @staticmethod
+    def load_tensor(idx, tensor_dir, file_zero_padding_num, label):
+        """Load velocity tensor from file.
+
+        Args:
+            idx (`int`): file index. (e.g. 0, 1, 2, ...)
+        Returns:
+            `np.ndarray`: velocity tensor. shape = (N, 3)
+        """
+        tensor_name = ("%s_%0" + str(file_zero_padding_num) + "d.npy")%(label, idx)
+        tensor = np.load(os.path.join(tensor_dir, tensor_name), allow_pickle=True)
+        return {idx: tensor.astype(np.float32)}
+
     def load_image_tensor_parallel(self):
         # Number of CPU cores available
         num_workers = multiprocessing.cpu_count()
@@ -151,5 +164,24 @@ class DataLoaderParallel(Dataset):
         label_idx_list =    sorted(label_idx_list, key=lambda x: list(x.keys())[0])
         # Extract tensors from list of dictionaries
         label_list =    [list(label_idx_dict.values())[0]    for label_idx_dict    in label_idx_list]
+        
+        return label_list
+    
+    def load_tensor_parallel(self, label):
+        # Number of CPU cores available
+        num_workers = multiprocessing.cpu_count()
+        
+        # Load all tensors using multiprocessing
+        idx_list    = parmap.starmap(self.load_tensor,
+                                        list(zip(range(self.max_index),
+                                                 repeat(self.tensor_dir), 
+                                                 repeat(self.file_zero_padding_num),
+                                                 repeat(label))),
+                                     pm_processes = num_workers, pm_chunksize = num_workers, pm_pbar = {'desc':'Loading ' + label + ' tensor...'})
+        
+        # Sort tensors by index
+        idx_list =    sorted(idx_list, key=lambda x: list(x.keys())[0])
+        # Extract tensors from list of dictionaries
+        label_list =    [list(label_idx_dict.values())[0]    for label_idx_dict    in idx_list]
         
         return label_list

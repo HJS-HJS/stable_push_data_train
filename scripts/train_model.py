@@ -242,8 +242,8 @@ if __name__ == "__main__":
     momentum_rate = config["momentum_rate"] # 0.9
 
     # data
-    pushnet_train_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='train', zero_padding=config["file_zero_padding_num"])
-    pushnet_val_dataset = PushNetDataset(dataset_dir, image_type=image_type, type='val', zero_padding=config["file_zero_padding_num"])
+    pushnet_train_dataset = PushNetDataset(dataset_dir, type='train', image_type=image_type, zero_padding=config["file_zero_padding_num"])
+    pushnet_val_dataset = PushNetDataset(dataset_dir, type='val', image_type=image_type, zero_padding=config["file_zero_padding_num"])
     
     train_sampler = load_sampler(pushnet_train_dataset)
     val_sampler = load_sampler(pushnet_val_dataset)
