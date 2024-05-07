@@ -45,7 +45,7 @@ StablePushNet:
 # Anlyzation tool configuration for trained model
 confusion:
   num_pushes: 1 # How many push cases you want to analyze
-  num_data_points: 5000 # How many test samples you want to analyze
+  num_data_points: 3000 # How many test samples you want to analyze
 
 feature:
   num_data_points: 5000 # How many data points you want to analyze
