@@ -17,9 +17,8 @@ import matplotlib.pyplot as plt
 '''
 Plot the network output (velocity sphere in which each velocity is colored by the estimated push success rate)
 and the corresponding image.
-
-
 '''
+
 def model_loop(dataloader,model,velocities):
     predictions, images = [], []
     velocities = torch.from_numpy(velocities.astype(np.float32)).to(DEVICE)
@@ -54,11 +53,10 @@ def plot_model(dataloader,model,velocities,num_samples):
         ax.view_init(elev = 0,azim = 0)
         ax.set_xlabel(r"$IRC$ [m]")
         ax.set_ylabel(r"$Gripper Width$ [m]")
-        # ax.set_ylabel(r"$Height$ [m]")
-        ax.set_zlabel(r"$Angl$ [rad]", rotation=0)
+        ax.set_zlabel(r"$Angl$ [degree]", rotation=0)
         ax.set_box_aspect((1,2,2))
         ax.grid(False)
-        p = ax.scatter(_velocity[:,0], _velocity[:,1], _velocity[:,2], stability[idx], c=stability[idx], cmap="jet", s=50, vmin=0, vmax=1)
+        p = ax.scatter(_velocity[:,0], _velocity[:,1], np.rad2deg(_velocity[:,2]), stability[idx], c=stability[idx], cmap="jet", s=100, vmin=0, vmax=1)
         plot_fig.colorbar(p, ax=ax)
         
         # Plot image
@@ -112,7 +110,6 @@ if __name__ == '__main__':
     MIN_A=0
     VEL_NUM=2000
     _velocity=np.vstack((linear_velocities(samples=int(VEL_NUM/2))[:,0], MIN_L + (MAX_L - MIN_L) * np.random.rand(VEL_NUM), MIN_A + (MAX_A - MIN_A) * np.random.rand(VEL_NUM))).T
-    # _velocity=np.vstack((linear_velocities(samples=int(VEL_NUM/2))[:,0], MIN_H + (MAX_H - MIN_H) * np.random.rand(VEL_NUM), MIN_A + (MAX_A - MIN_A) * np.random.rand(VEL_NUM))).T
 
     velocity_mean = np.load(data_stats_dir + "/velocity_mean.npy")
     velocity_std = np.load(data_stats_dir + "/velocity_std.npy")
