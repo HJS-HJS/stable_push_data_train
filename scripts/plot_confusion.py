@@ -73,7 +73,7 @@ if __name__ == '__main__':
         
     image_type = config['planner']['image_type']
     MODEL_NAME = config['network']["model_name"]
-    num_data_points = config['confusion']['num_data_points']
+    VEL_NUM = config['confusion']['num_data_points']
     num_contact_samples= config['confusion']['num_pushes']
     DATA_DIR = config["data_dir"]
     num_push_cases = config['network_output']['num_pushes']
@@ -82,9 +82,6 @@ if __name__ == '__main__':
     MIN_L=0.04
     MAX_A=np.pi/2
     MIN_A=0
-    VEL_NUM=2000
- 
-
 
     model_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), config["model_dir"], config['network']["model_name"], 'model.pt'))
 
@@ -94,7 +91,7 @@ if __name__ == '__main__':
     
     # Getting features and confusion index
     print("Getting features and confusion index")
-    test_dataset = PushNetDataset(dataset_dir=DATA_DIR, type='test', image_type=config['planner']['image_type'], num_debug_samples = num_data_points)
+    test_dataset = PushNetDataset(dataset_dir=DATA_DIR, type='test', image_type=config['planner']['image_type'], num_debug_samples = VEL_NUM)
     test_sampler = load_sampler(test_dataset)
     dataloader = DataLoader(test_dataset, 1, test_sampler, num_workers=16)
     
