@@ -34,12 +34,14 @@ class PushNetTest(nn.Module):
         self.velocity_stream = nn.Sequential(
             # pc1
             nn.Linear(3, 16),
-            nn.ReLU()
+            nn.LeakyReLU(),
+            # nn.ReLU()
         )
         self.merge_stream = nn.Sequential(
             # fc4
             nn.Linear(128+16, 128), # (B, ..., C)
-            nn.ReLU(),
+            nn.LeakyReLU(),
+            # nn.ReLU(),
             # fc5
             CosineNormalization(128, 2),
         )
