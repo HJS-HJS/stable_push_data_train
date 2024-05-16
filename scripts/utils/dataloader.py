@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from utils.dataloader_parallel import DataLoaderParallel
 
 class PushNetDataset(Dataset):
-    def __init__(self, dataset_dir: str, type: str='train', image_type: str='masked_image', num_debug_samples: int=0, zero_padding: int=7):
+    def __init__(self, dataset_dir: str, type: str='train', image_type: str='masked_image', num_debug_samples: int=0, zero_padding: int=7, pin_memory: bool=True):
         """Dataset class for DexNet.
 
         Args:
@@ -20,11 +20,12 @@ class PushNetDataset(Dataset):
         """
         # dataset option
         self.image_type = image_type
-        FILE_ZERO_PADDING_NUM = zero_padding
+        self.FILE_ZERO_PADDING_NUM = zero_padding
+        self.pin_memory = pin_memory
         dataset_dir = os.path.expanduser('~') + '/' + dataset_dir
 
         # data directory
-        tensor_dir = os.path.join(dataset_dir, 'tensors')
+        self.tensor_dir = os.path.join(dataset_dir, 'tensors')
         split_dir  = os.path.join(dataset_dir, 'split')
         stats_dir  = os.path.join(dataset_dir, 'data_stats')
     
@@ -32,7 +33,7 @@ class PushNetDataset(Dataset):
         indices_file = os.path.join(split_dir, type + '_indices.npy')
         self.indices = np.load(indices_file)
         
-        file_list = os.listdir(tensor_dir)
+        file_list = os.listdir(self.tensor_dir)
         file_list = [file_name for file_name in file_list if file_name.startswith('image')]
         indices = [int(re.findall(r'\d+', file_name)[0]) for file_name in file_list]
         indices = np.sort(indices)
@@ -41,26 +42,24 @@ class PushNetDataset(Dataset):
         # Data normalization
         self.velocity_mean = np.load(os.path.join(stats_dir, 'velocity_mean.npy'))
         self.velocity_std  = np.load(os.path.join(stats_dir, 'velocity_std.npy'))
-        data_loader_parallel = DataLoaderParallel(max_index, tensor_dir, FILE_ZERO_PADDING_NUM)
+        data_loader_parallel = DataLoaderParallel(max_index, self.tensor_dir, self.FILE_ZERO_PADDING_NUM)
         
-        if image_type == 'masked_image':
+        if self.pin_memory:
+            if image_type == 'masked_image':
+                
+                self.masked_image_list = data_loader_parallel.load_masked_image_tensor_parallel()
+                
+            elif image_type == 'masked_origin_image':
+                self.masked_origin_image_list = data_loader_parallel.load_tensor_parallel(image_type)
+                self.masked_origin_image_list = np.expand_dims(self.masked_origin_image_list, axis=1)
             
-            self.masked_image_list = data_loader_parallel.load_masked_image_tensor_parallel()
-            self.masked_image_mean = np.load(os.path.join(stats_dir, 'masked_image_mean.npy'))
-            self.masked_image_std  = np.load(os.path.join(stats_dir, 'masked_image_std.npy'))
-            
-        elif image_type == 'masked_origin_image':
-            self.masked_origin_image_list = data_loader_parallel.load_tensor_parallel(image_type)
-            self.masked_origin_image_list = np.expand_dims(self.masked_origin_image_list, axis=1)
-            self.masked_origin_image_mean = np.load(os.path.join(stats_dir, image_type + '_mean.npy'))
-            self.masked_origin_image_std  = np.load(os.path.join(stats_dir, image_type + '_std.npy'))
-        
-        else:
-            
-            self.image_list = data_loader_parallel.load_image_tensor_parallel()
-            self.image_mean = np.load(os.path.join(stats_dir, 'image_mean.npy'))
-            self.image_std  = np.load(os.path.join(stats_dir, 'image_std.npy'))
-        
+            else:
+                
+                self.image_list = data_loader_parallel.load_image_tensor_parallel()
+                
+        self.image_mean = np.load(os.path.join(stats_dir, image_type + '_mean.npy'))
+        self.image_std  = np.load(os.path.join(stats_dir, image_type + '_std.npy'))
+
         self.velocity_list = data_loader_parallel.load_velocity_tensor_parallel()
         self.label_list = data_loader_parallel.load_label_tensor_parallel()
         
@@ -76,22 +75,28 @@ class PushNetDataset(Dataset):
     def __getitem__(self, idx):
         
         idx   = self.indices[idx]
-        
-        if self.image_type == 'masked_image':
-            
-            image = self.masked_image_list[idx]
-            image = (image - self.masked_image_mean) / self.masked_image_std
 
-        elif self.image_type == 'masked_origin_image':
-            
-            image = self.masked_origin_image_list[idx]
-            image = (image - self.masked_origin_image_mean) / self.masked_origin_image_std
+        # Save data in pinned memory
+        if self.pin_memory:
+            if self.image_type == 'masked_image':
+                image = self.masked_image_list[idx]
+                image = (image - self.image_mean) / self.image_std
 
-        else: 
-            
-            image = self.image_list[idx]
+            elif self.image_type == 'masked_origin_image':
+                image = self.masked_origin_image_list[idx]
+                image = (image - self.image_mean) / self.image_std
+
+            else: 
+                image = self.image_list[idx]
+                image = (image - self.image_mean) / self.image_std
+                
+        # Not save data in pinned memory. Use only you dont have enough memory.
+        else:
+            tensor_name = ("%s_%0" + str(self.FILE_ZERO_PADDING_NUM) + "d.npy")%(self.image_type, idx)
+            image = np.load(os.path.join(self.tensor_dir, tensor_name), allow_pickle=True).astype(np.float32)
+            image = np.expand_dims(image, axis=0)
             image = (image - self.image_mean) / self.image_std
-        
+
         velocity = self.velocity_list[idx]
         velocity = (velocity - self.velocity_mean) / self.velocity_std
         

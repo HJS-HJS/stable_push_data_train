@@ -213,40 +213,42 @@ def load_sampler(dataset):
 if __name__ == "__main__":
     
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #Get current file path
+    
+    # Get current file path
     current_file_path = os.path.dirname(os.path.realpath(__file__))
     config_file = os.path.abspath(os.path.join(current_file_path, '..', 'config', 'config.yaml'))
-
+    
     # Load configuation file
     with open(config_file,'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
-    image_type = config['planner']['image_type']
-
-    # Data Directories
+    # Parameter settings
+    # Data directories
     dataset_dir = config["data_dir"]
     tensor_dir = dataset_dir + '/tensors'
+    # Image type
+    image_type = config['planner']['image_type']
+    # Train parameter
+    zero_padding_num = config["file_zero_padding_num"]
+    learning_rate = config["base_lr"] # 1e-4
+    lr_decay_rate = config["decay_rate"] # 0.95
+    weight_decay = config["train_l2_regularizer"] # 0.0005
+    batch_size = config["batch_size"] # 64
+    epochs = config["num_epochs"] # 60
+    momentum_rate = config["momentum_rate"] # 0.9
+    
+
 
     num_workers = multiprocessing.cpu_count()
     cur_date = datetime.today().strftime("%Y-%m-%d-%H%M")
     print('Starting training at {}. Device: {}'.format(cur_date, DEVICE))
 
-    # Learning rate
-    learning_rate = config["base_lr"] # 1e-4
-    lr_decay_rate = config["decay_rate"] # 0.95
-
-    # Weight decay (weight regularization)
-    weight_decay = config["train_l2_regularizer"] # 0.0005
-    batch_size = config["StablePushNet"]["batch_size"] # 64
-    epochs = config["num_epochs"] # 50
-    momentum_rate = config["momentum_rate"] # 0.9
-
     # data
-    pushnet_train_dataset = PushNetDataset(dataset_dir, type='train', image_type=image_type, zero_padding=config["file_zero_padding_num"])
-    pushnet_val_dataset = PushNetDataset(dataset_dir, type='val', image_type=image_type, zero_padding=config["file_zero_padding_num"])
+    pushnet_train_dataset = PushNetDataset(dataset_dir, type='train', image_type=image_type, zero_padding=config["file_zero_padding_num"], pin_memory=False)
+    pushnet_val_dataset = PushNetDataset(dataset_dir, type='val', image_type=image_type, zero_padding=config["file_zero_padding_num"], pin_memory=False)
     
-    train_sampler = load_sampler(pushnet_train_dataset)
     val_sampler = load_sampler(pushnet_val_dataset)
+    train_sampler = load_sampler(pushnet_train_dataset)
     train_dataloader = DataLoader(pushnet_train_dataset, batch_size, train_sampler, num_workers=num_workers)
     val_dataloader = DataLoader(pushnet_val_dataset, 1000, val_sampler, num_workers=num_workers)
 
