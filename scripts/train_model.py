@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from utils.model import PushNet, NewModel
+from utils.model_test import PushNetTest
 from utils.dataloader import PushNetDataset
 import multiprocessing
 import yaml
@@ -250,7 +251,8 @@ if __name__ == "__main__":
     val_dataloader = DataLoader(pushnet_val_dataset, 1000, val_sampler, num_workers=num_workers)
 
     # model
-    model = PushNet()
+    # model = PushNet()
+    model = PushNetTest()
     model.to(DEVICE)
     loss_fn = nn.CrossEntropyLoss()
 
