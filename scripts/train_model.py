@@ -231,11 +231,8 @@ if __name__ == "__main__":
     # Train parameter
     zero_padding_num = config["file_zero_padding_num"]
     learning_rate = config["base_lr"] # 1e-4
-    lr_decay_rate = config["decay_rate"] # 0.95
-    weight_decay = config["train_l2_regularizer"] # 0.0005
     batch_size = config["batch_size"] # 64
     epochs = config["num_epochs"] # 60
-    momentum_rate = config["momentum_rate"] # 0.9
     
 
 

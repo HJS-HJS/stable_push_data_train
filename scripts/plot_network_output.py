@@ -84,7 +84,8 @@ if __name__ == '__main__':
     
     VEL_NUM=config['network_output']['num_data_points']
 
-    network_inputs, real_inputs = model_input(samples=VEL_NUM, mode=[None,None,None])
+    # network_inputs, real_inputs = model_input(samples=VEL_NUM, mode=[None,None,None])
+    network_inputs, real_inputs = model_input(samples=VEL_NUM, mode=[None,None,0.08])
     # network_inputs, real_inputs = model_input(samples=VEL_NUM, mode=[None,np.pi/2,None])
 
     velocity_mean = np.load(data_stats_dir + "/velocity_mean.npy")
