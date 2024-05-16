@@ -303,10 +303,10 @@ if __name__ == "__main__":
             print('validation loss increase{}'.format(min_val_loss - val_metric['loss']))
             break
         if min_val_loss > val_metric['loss']:
-            torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model' + str(epoch) + '_loss_' + str(val_metric['loss']) +'.pt')
+            torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model' + str(epoch + 1) + '_loss_' + str(val_metric['loss']) +'.pt')
             min_val_loss = val_metric['loss']
-        if max_val_ap < val_metric['ap']:
-            torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model' + str(epoch) + '_ap_' + str(val_metric['ap']) +'.pt')
+        elif max_val_ap < val_metric['ap']:
+            torch.save(model.state_dict(), model_dir + '/{}/'.format(cur_date) + 'model' + str(epoch + 1) + '_ap_' + str(val_metric['ap']) +'.pt')
             max_val_ap = val_metric['ap']
 
         print('-'*10)

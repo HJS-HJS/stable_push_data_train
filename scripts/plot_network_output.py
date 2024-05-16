@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from tqdm import tqdm
 from utils.model import PushNet
 from utils.dataloader import PushNetDataset
-from utils.utils import fibonacci_sphere, linear_velocities
+from utils.utils import *
 torch.multiprocessing.set_sharing_strategy('file_system')
 # import matplotlib
 # matplotlib.use('Qt5Agg')
@@ -19,17 +19,17 @@ Plot the network output (velocity sphere in which each velocity is colored by th
 and the corresponding image.
 '''
 
-def model_loop(dataloader,model,velocities):
+def model_loop(dataloader, model, input):
     predictions, images = [], []
-    velocities = torch.from_numpy(velocities.astype(np.float32)).to(DEVICE)
     with torch.no_grad():
+        input = torch.from_numpy(input.astype(np.float32)).to(DEVICE)
         
-        for image, velocity, label_onehot  in tqdm(dataloader):
+        for image, _, _  in tqdm(dataloader):
             
             image_device = image.to(DEVICE)
-            images_tensor = torch.tile(image_device,(len(velocities),1,1,1))
+            images_tensor = torch.tile(image_device,(len(input),1,1,1))
             
-            outputs = model(images_tensor,velocities).cpu()
+            outputs = model(images_tensor,input).cpu()
             result = torch.nn.Softmax(dim=1)(outputs)[:,1] # Estimated push success rate.
             
             predictions.append(result.detach().numpy())
@@ -37,26 +37,24 @@ def model_loop(dataloader,model,velocities):
             
     return np.array(predictions), np.array(images)
 
-
-def plot_model(dataloader,model,velocities,num_samples):
+def plot_model(dataloader, model, model_input, num_samples):
     # figure configuration
     plot_fig = plt.figure()
     image_fig = plt.figure()
     num_samples_per_edge = int(np.ceil(np.sqrt(num_samples)))
-    stability, images = model_loop(dataloader,model,velocities)
+    stability, images = model_loop(dataloader,model,model_input)
     stability = stability.reshape(num_samples,-1)
     for idx in range(num_samples):
-        
         # Plot model output
         ax = plot_fig.add_subplot(num_samples_per_edge,num_samples_per_edge,idx+1,projection='3d')
         ax.set_title(f"Result {idx}")
         ax.view_init(elev = 0,azim = 0)
         ax.set_xlabel(r"$IRC$ [m]")
-        ax.set_ylabel(r"$Gripper Width$ [m]")
-        ax.set_zlabel(r"$Angl$ [degree]", rotation=0)
+        ax.set_ylabel(r"$Angl$ [degree]", rotation=0)
+        ax.set_zlabel(r"$Gripper Width$ [m]")
         ax.set_box_aspect((1,2,2))
         ax.grid(False)
-        p = ax.scatter(_velocity[:,0], _velocity[:,1], np.rad2deg(_velocity[:,2]), stability[idx], c=stability[idx], cmap="jet", s=100, vmin=0, vmax=1)
+        p = ax.scatter(real_inputs[:,0], real_inputs[:,1], real_inputs[:,2], stability[idx], c=stability[idx], cmap="jet", s=100, vmin=0, vmax=1)
         plot_fig.colorbar(p, ax=ax)
         
         # Plot image
@@ -66,24 +64,6 @@ def plot_model(dataloader,model,velocities,num_samples):
         ax.axis('off')
 
     plt.show()
-    
-def load_sampler(dataset):
-    
-    label_list = dataset.label_list
-    indices = dataset.indices
-    num_true=0
-    for index in indices:
-        if label_list[index] == 1:
-            num_true += 1
-    num_false = len(indices) - num_true
-    
-    portion_true = num_true/len(indices)
-    portion_false = num_false/len(indices)
-    weights = [1/portion_true if label_list[index] == 1 else 1/portion_false for index in indices]
-    
-    sampler = WeightedRandomSampler(weights, len(weights))
-    
-    return sampler
     
 if __name__ == '__main__':
     
@@ -102,18 +82,14 @@ if __name__ == '__main__':
     num_push_cases = config['network_output']['num_pushes']
     data_stats_dir = os.path.expanduser('~') + '/' + DATA_DIR + '/data_stats'
     
-    MAX_H=0.02
-    MIN_H=0.02
-    MAX_L=0.08
-    MIN_L=0.04
-    MAX_A=np.pi/2
-    MIN_A=0
-    VEL_NUM=2000
-    _velocity=np.vstack((linear_velocities(samples=int(VEL_NUM/2))[:,0], MIN_L + (MAX_L - MIN_L) * np.random.rand(VEL_NUM), MIN_A + (MAX_A - MIN_A) * np.random.rand(VEL_NUM))).T
+    VEL_NUM=config['network_output']['num_data_points']
+
+    network_inputs, real_inputs = model_input(samples=VEL_NUM, mode=[None,None,None])
+    # network_inputs, real_inputs = model_input(samples=VEL_NUM, mode=[None,np.pi/2,None])
 
     velocity_mean = np.load(data_stats_dir + "/velocity_mean.npy")
     velocity_std = np.load(data_stats_dir + "/velocity_std.npy")
-    velocity_normalized = (_velocity - velocity_mean) / velocity_std
+    input_normalized = (network_inputs - velocity_mean) / velocity_std
     
     model = PushNet()
     model.to(DEVICE)
@@ -122,7 +98,6 @@ if __name__ == '__main__':
     # Getting features and confusion index
     print("Getting features and confusion index")
     test_dataset = PushNetDataset(dataset_dir=DATA_DIR, type='test', image_type=config['planner']['image_type'], num_debug_samples = num_push_cases)
-    test_sampler = load_sampler(test_dataset)
     num_workers = multiprocessing.cpu_count()
     dataloader = DataLoader(test_dataset, shuffle=True, num_workers=num_workers)
-    plot_model(dataloader,model,velocity_normalized, num_push_cases)
+    plot_model(dataloader, model, input_normalized, num_push_cases)
