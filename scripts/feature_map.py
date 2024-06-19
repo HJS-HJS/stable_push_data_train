@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from utils.model import PushNet
+from utils.model_test import PushNetTest
 from utils.dataloader import PushNetDataset
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
@@ -66,7 +67,6 @@ def feature_extraction(dataloader, model, feat_model):
               features = features[1:]
               confusion = np.array(confusion)
               break
-              
     return features, TP, FP, FN, TN, confusion
 
 def scale_to_01_range(x):
@@ -113,7 +113,8 @@ if __name__ == '__main__':
 
     model_path = os.path.abspath(os.path.join(current_file_path, '..', '..',  'models', MODEL_NAME, 'model.pt'))
     
-    model = PushNet()
+    # model = PushNet()
+    model = PushNetTest()
     model.to(DEVICE)
     model.load_state_dict(torch.load(model_path))#, map_location=torch.device('cpu')
     
@@ -162,7 +163,7 @@ if __name__ == '__main__':
         
         color = colors[color]
         
-        ax.scatter(current_tx, current_ty, current_tz, c=color, s=100) #, label=legends[color]
+        ax.scatter(current_tx, current_ty, current_tz, c=color, s=200) #, label=legends[color]
     ax.legend(legends)
     ax.grid(False)
     plt.show()
@@ -179,11 +180,11 @@ if __name__ == '__main__':
     confusion_label = np.expand_dims(confusion, axis=1)
 
     data = np.concatenate((tx, ty), axis=1)    
-    # data = np.concatenate((data[1:], confusion_label), axis=1)   
+    # data = np.concatenate((data[1:], confusion_label), axis=1)  
     data = np.concatenate((data, confusion_label), axis=1)   
 
     df = pd.DataFrame(data, columns=['f_1', 'f_2', 'label'])    
-    ax = sns.scatterplot(data = df, x="f_1", y="f_2", hue="label", palette="Set2", s=150)
+    ax = sns.scatterplot(data = df, x="f_1", y="f_2", hue="label", palette="Set2", s=250)
     sns.set(rc = {'figure.figsize':(30,30)})
     ax.grid(False)
     ax.set_aspect('equal')
