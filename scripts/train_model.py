@@ -226,7 +226,6 @@ if __name__ == "__main__":
     # Parameter settings
     # Data directories
     dataset_dir = config["data_dir"]
-    tensor_dir = dataset_dir + '/tensors'
     # Image type
     image_type = config['planner']['image_type']
     # Train parameter

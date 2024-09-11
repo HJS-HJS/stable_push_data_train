@@ -8,26 +8,31 @@ from torch.utils.data import Dataset, DataLoader
 from utils.dataloader_parallel import DataLoaderParallel
 
 class PushNetDataset(Dataset):
-    def __init__(self, dataset_dir: str, type: str='train', image_type: str='masked_image', num_debug_samples: int=0, zero_padding: int=7, pin_memory: bool=True):
+    def __init__(self, dataset_dir: str, model_dir: str=None, type: str='train', image_type: str='masked_image', num_debug_samples: int=0, zero_padding: int=7, pin_memory: bool=True):
         """Dataset class for DexNet.
 
         Args:
             dataset_dir (str): Path to the dataset directory.
+            model_dir (str): Path to the trained model directory.
             type (str, optional): Type of the dataset. Defaults to 'train'.
             image_type (str, optional): type of the network input image. Defaults to 'masked'.
             num_debug_samples (int, optional): _description_. Defaults to 0.
             zero_padding (int, optional): Data name padding number. Defaults to 7.
         """
         # dataset option
+        if model_dir is None:
+            model_dir = dataset_dir
+        dataset_dir = os.path.expanduser('~') + '/' + dataset_dir
+        model_dir = os.path.expanduser('~') + '/' + model_dir
+            
         self.image_type = image_type
         self.FILE_ZERO_PADDING_NUM = zero_padding
         self.pin_memory = pin_memory
-        dataset_dir = os.path.expanduser('~') + '/' + dataset_dir
 
         # data directory
         self.tensor_dir = os.path.join(dataset_dir, 'tensors')
         split_dir  = os.path.join(dataset_dir, 'split')
-        stats_dir  = os.path.join(dataset_dir, 'data_stats')
+        stats_dir  = os.path.join(model_dir, 'data_stats')
     
         # load indicies
         indices_file = os.path.join(split_dir, type + '_indices.npy')

@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from utils.model import PushNet
+from utils.model_test import PushNetTest
 # from utils.dataloader_confusion import PushNetDataset
 from utils.dataloader import PushNetDataset
 from utils.utils import *
@@ -71,6 +72,14 @@ if __name__ == '__main__':
     with open(config_file, "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
         
+    # Get model config file path
+    model_config_dir = os.path.abspath(os.path.join(os.path.expanduser('~'), config["model_dir"], config['network']["model_name"], 'pusher.yaml'))
+    config_file = os.path.abspath(os.path.join(model_config_dir))
+    
+    # Load configuation file
+    with open(config_file,'r') as f:
+        model_config = yaml.load(f, Loader=yaml.FullLoader)
+
     IMAGE_TYPE = config['planner']['image_type']
     MODEL_NAME = config['network']["model_name"]
     INPUT_NUM = config['confusion']['num_data_points']
@@ -78,7 +87,8 @@ if __name__ == '__main__':
     DATA_DIR = config["data_dir"]
     MODEL_DIR = os.path.abspath(os.path.join(os.path.expanduser('~'), config["model_dir"], config['network']["model_name"], 'model.pt'))
 
-    model = PushNet()
+    # model = PushNet()
+    model = PushNetTest()
     model.to(DEVICE)
     model.load_state_dict(torch.load(MODEL_DIR)) #, map_location=torch.device('cpu')
     
@@ -88,7 +98,7 @@ if __name__ == '__main__':
     test_sampler = load_sampler(test_dataset)
     dataloader = DataLoader(test_dataset, 1, test_sampler, num_workers=16)
     
-    _, real_inputs = model_input(samples=INPUT_NUM, mode=[None,None,None])
+    _, real_inputs = model_input(samples=INPUT_NUM, model_config=model_config, mode=[None,None,None])
 
     # velocity = fibonacci_sphere()
     
